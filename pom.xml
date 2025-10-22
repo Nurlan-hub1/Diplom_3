@@ -24,7 +24,13 @@
             <artifactId>selenium-java</artifactId>
             <version>4.20.0</version>
         </dependency>
-
+        <!-- Lombok для генерации геттеров/сеттеров/конструкторов -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+            <scope>provided</scope>
+        </dependency>
         <!-- WebDriverManager -->
         <dependency>
             <groupId>io.github.bonigarcia</groupId>

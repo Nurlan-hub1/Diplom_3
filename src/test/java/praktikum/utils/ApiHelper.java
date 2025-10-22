@@ -6,17 +6,19 @@ import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
 import praktikum.models.LoginCredentials;
 import praktikum.models.User;
+
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.notNullValue;
 
 public class ApiHelper {
-    private static final String BASE_URI = TestUtils.getBaseUrl() + "/api";
+    // Явно указываем рабочий BASE_URI
+    private static final String BASE_URI = "https://stellarburgers.education-services.ru";
 
     static {
-        RestAssured.baseURI = BASE_URI;
+        // RestAssured базовый URI — добавляем /api здесь, чтобы дальше использовать относительные пути
+        RestAssured.baseURI = BASE_URI + "/api";
     }
 
-    // Используем POJO для сериализации
     public static ValidatableResponse registerUser(User user) {
         return given()
                 .contentType(ContentType.JSON)
@@ -26,7 +28,6 @@ public class ApiHelper {
                 .then();
     }
 
-    // Используем POJO для сериализации
     public static ValidatableResponse loginUser(LoginCredentials credentials) {
         return given()
                 .contentType(ContentType.JSON)
@@ -39,18 +40,16 @@ public class ApiHelper {
     public static Response deleteUser(String accessToken) {
         return given()
                 .contentType(ContentType.JSON)
-                .header("Authorization", accessToken) // Ожидается формат "Bearer <token>"
+                .header("Authorization", accessToken) // ожидается "Bearer <token>" или просто токен в зависимости от API
                 .when()
                 .delete("/auth/user");
     }
 
-    // Метод для удобного получения токена из ответа логина
     public static String extractAccessToken(ValidatableResponse loginResponse) {
         loginResponse.assertThat().body("accessToken", notNullValue());
-        // Извлекаем токен (убираем "Bearer " префикс, если он есть)
         String fullToken = loginResponse.extract().path("accessToken");
         if (fullToken != null && fullToken.startsWith("Bearer ")) {
-            return fullToken.substring(7); // "Bearer ".length()
+            return fullToken.substring(7);
         }
         return fullToken;
     }

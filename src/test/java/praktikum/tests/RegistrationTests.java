@@ -9,6 +9,7 @@ import praktikum.pages.LoginPage;
 import praktikum.pages.RegistrationPage;
 import praktikum.utils.ApiHelper;
 import praktikum.utils.TestUtils;
+
 import static org.junit.Assert.assertTrue;
 
 @DisplayName("Тесты регистрации")
@@ -24,26 +25,25 @@ public class RegistrationTests extends BaseTest {
         String password = TestUtils.generateRandomPassword();
         String name = TestUtils.generateRandomName();
         User testUser = new User(email, password, name);
+
+        // Переход на страницу регистрации
         driver.get(baseUrl + "/register");
         RegistrationPage registrationPage = new RegistrationPage(driver);
         registrationPage.waitForPageToLoad();
+
+        // Регистрация пользователя
         registrationPage.register(testUser.getName(), testUser.getEmail(), testUser.getPassword());
+
+        // Проверка перехода на страницу входа
         LoginPage loginPage = new LoginPage(driver);
         loginPage.waitForPageToLoad();
         assertTrue("Не произошел переход на страницу входа после успешной регистрации",
                 loginPage.isLoginFormDisplayed());
-        // Очистка: Удаление пользователя через API после теста
+
+        // Сохраняем токен для очистки в методе @After
         var loginResponse = ApiHelper.loginUser(new LoginCredentials(email, password));
         if (loginResponse.extract().statusCode() == 200) {
-            String token = ApiHelper.extractAccessToken(loginResponse);
-            if (token != null && !token.isEmpty()) {
-                try {
-                    var deleteResponse = ApiHelper.deleteUser("Bearer " + token);
-                    System.out.println("Delete user API response status (registration test): " + deleteResponse.getStatusCode());
-                } catch (Exception e) {
-                    System.err.println("Error deleting user after registration test: " + e.getMessage());
-                }
-            }
+            accessTokenForCleanup = ApiHelper.extractAccessToken(loginResponse);
         }
     }
 
@@ -54,26 +54,27 @@ public class RegistrationTests extends BaseTest {
         String email = TestUtils.generateRandomEmail();
         String password = "123"; // Некорректный пароль
         String name = TestUtils.generateRandomName();
+
         driver.get(baseUrl + "/register");
         RegistrationPage registrationPage = new RegistrationPage(driver);
         registrationPage.waitForPageToLoad();
         registrationPage.register(name, email, password);
+
         assertTrue("Не отображается ошибка валидации пароля 'Некорректный пароль'",
                 registrationPage.isErrorDisplayed());
     }
 
     @After
     public void tearDown() {
-        // Очистка: Удаление пользователя через API после теста
+        // Очистка: удаление пользователя после теста
         if (accessTokenForCleanup != null && !accessTokenForCleanup.isEmpty()) {
-            System.out.println("Attempting to delete user via API (Registration test cleanup)...");
             try {
                 var deleteResponse = ApiHelper.deleteUser("Bearer " + accessTokenForCleanup);
-                System.out.println("Delete user API response status (registration test cleanup): " + deleteResponse.getStatusCode());
+                System.out.println("Пользователь удалён, статус: " + deleteResponse.getStatusCode());
             } catch (Exception e) {
-                System.err.println("Error deleting user after registration test: " + e.getMessage());
+                System.err.println("Ошибка при удалении пользователя: " + e.getMessage());
             }
         }
-        super.tearDown(); // Вызываем tearDown из BaseTest для закрытия драйвера
+        super.tearDown();
     }
 }
