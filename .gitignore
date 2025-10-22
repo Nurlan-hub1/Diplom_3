@@ -1,0 +1,6 @@
+.allure
+.idea
+desktop.ini
+target/*
+!target/allure-results-chrome/
+!target/allure-results-yandex/
